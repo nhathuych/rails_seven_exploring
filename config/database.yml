@@ -51,5 +51,5 @@ test:
 production:
   <<: *default
   database: rails_seven_exploring_production
-  username: rails_seven_exploring
-  password: <%= ENV["RAILS_SEVEN_EXPLORING_DATABASE_PASSWORD"] %>
+  username: root
+  password:
