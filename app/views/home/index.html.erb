@@ -1,1 +1,2 @@
-<h1><%= @message %></h1>
+<h1><%= @article&.title || 'Chưa có dữ liệu má ơi!' %></h1>
+<p><%= @article&.content || 'Chưa có dữ liệu má ơi!' %></p>

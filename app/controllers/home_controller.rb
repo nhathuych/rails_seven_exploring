@@ -1,5 +1,5 @@
 class HomeController < ApplicationController
   def index
-    @message = "Hello Rails 7! :)))"
+    @article = Article.first
   end
 end
