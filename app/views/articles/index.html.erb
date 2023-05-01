@@ -1,0 +1,12 @@
+<p>
+  <%= link_to 'Random 10 articles', articles_path(ramdom: 10) %>
+</p>
+
+<% if @articles.blank? %>
+  <span><%= 'No articles here' %></span>
+<% else %>
+  <% @articles.each do |article| %>
+    <h4><%= "#{ article.id } - #{ article.title }" %></h4>
+    <span><%= article.content %></span>
+  <% end %>
+<% end %>
