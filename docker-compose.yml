@@ -1,0 +1,75 @@
+version: '3'
+services:
+  web:
+    build: . # build 1 image cho web
+    command: bash -c "rm -f tmp/pids/server.pid && ./bin/webpack-dev-server & bundle exec rails s -p 3000 -b '0.0.0.0'"
+    volumes:
+      # "." đại diện cho thư mục hiện tại trên local
+      # "/app" là đường dẫn tới thư mục bên trong container
+      # ".:/app" ánh xạ thư mục hiện tại trên local và thư mục project trong container
+      # cho phép thực hiện các thay đổi trong mã nguồn trên local mà không cần phải build lại hoặc restart lại container
+      # Container sẽ tự động nhận biết các thay đổi và cập nhật ứng dụng
+      - .:/app
+    # chỉ định container sẽ restart lại khi container bị stop hoặc lỗi.
+    restart: always
+    # tương tác với container thông qua command line trên terminal
+    # Không được khuyến khích trên môi trường production
+    tty: true
+    stdin_open: true
+    ports:
+      - 3000:3000
+    environment:
+      # cách 1
+      # - RAILS_ENV=development
+      # - REDIS_URL=redis://redis:6379/0
+
+      # cách này dễ nhìn hơn
+      RAILS_ENV: development
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - db
+  db:
+    image: mysql:8.0.33
+    # restart: on-failure << dùng cái này restart liên tục khi có lỗi
+    restart: always # restart 1 lần thôi
+    environment:
+      MYSQL_DATABASE: rails_seven_exploring_development
+      # mật khẩu đặt riêng cho container này nên đặt gì cũng dc
+      # MYSQL_ROOT_PASSWORD: password
+      MYSQL_ALLOW_EMPTY_PASSWORD: true
+    ports:
+      - 3306:3306
+    volumes:
+      # tạo 1 volume có tên là mysql_data để lưu lại db
+      # khi xóa hoặc khởi động lại container db thì dữ liệu không bị mất
+      # -> khi xóa volume mysql_data thì db sẽ mất
+      - mysql_data:/var/lib/mysql
+  redis:
+    image: redis:latest
+    # appendonly: mọi câu lệnh thay đổi dữ liệu(SET, INCR, DEL,...) sẽ được ghi lại vào cuối tệp log
+    # đảm bảo mọi thay đổi dữ liệu được ghi lại theo thứ tự và có thể phục hồi sau khi Redis khởi động lại
+    command: redis-server --appendonly yes
+    ports:
+      - 6379:6379
+    volumes:
+      - .:/app
+  sidekiq:
+    build: .
+    command: bundle exec sidekiq
+    volumes:
+      - .:/app
+    restart: always
+    tty: true
+    stdin_open: true
+    environment:
+      RAILS_ENV: development
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - redis
+      - web
+
+volumes:
+  # tạo volume "mysql_data" và liên kết nó với "/var/lib/mysql" trong container service db
+  # nếu khai báo volume là dấu "." thì khỏi cần
+  mysql_data:
+    driver: local
